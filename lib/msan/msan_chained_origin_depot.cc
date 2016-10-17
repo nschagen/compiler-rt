@@ -94,7 +94,7 @@ struct ChainedOriginDepotNode {
   typedef Handle handle_type;
 };
 
-static StackDepotBase<ChainedOriginDepotNode, 4, 20> chainedOriginDepot;
+__attribute__((section("sanitizer_data"))) __attribute__((aligned(0x1000))) static StackDepotBase<ChainedOriginDepotNode, 4, 20> chainedOriginDepot;
 
 StackDepotStats *ChainedOriginDepotGetStats() {
   return chainedOriginDepot.GetStats();

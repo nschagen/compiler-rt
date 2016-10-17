@@ -14,6 +14,6 @@
 
 namespace __sanitizer {
 
-PersistentAllocator thePersistentAllocator;
+__attribute__((section("sanitizer_data"))) __attribute__((aligned(0x1000))) PersistentAllocator thePersistentAllocator;
 
 }  // namespace __sanitizer

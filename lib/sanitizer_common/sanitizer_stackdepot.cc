@@ -102,7 +102,7 @@ void StackDepotHandle::inc_use_count_unsafe() {
 // FIXME(dvyukov): this single reserved bit is used in TSan.
 typedef StackDepotBase<StackDepotNode, 1, StackDepotNode::kTabSizeLog>
     StackDepot;
-static StackDepot theDepot;
+__attribute__((section("sanitizer_data"))) __attribute__((aligned(0x1000))) static StackDepot theDepot;
 
 StackDepotStats *StackDepotGetStats() {
   return theDepot.GetStats();
