@@ -22,6 +22,12 @@
 #error This file should only be included on POSIX
 #endif
 
+typedef void (*sanitizer_mmap_hook_t)(void *addr, unsigned long length, int prot, int flags, int fd, unsigned long offset, void *result_mem);
+typedef void (*sanitizer_munmap_hook_t)(void *addr, unsigned long length);
+
+extern "C" sanitizer_mmap_hook_t _sanitizer_mmap_hook;
+extern "C" sanitizer_munmap_hook_t _sanitizer_munmap_hook;
+
 namespace __sanitizer {
 
 // I/O

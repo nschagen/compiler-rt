@@ -15,6 +15,7 @@
 #include "sanitizer_platform.h"
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
 
+#include "sanitizer_posix.h"
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
@@ -100,6 +101,12 @@ const int FUTEX_WAKE = 1;
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 0
 #endif
 
+// Allows libdelta to provide hooks in order to intercept mmap(). libdelta
+// needs to be aware of the all mmaps, since it needs to ignore the differences
+// in these regions across variants
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE sanitizer_mmap_hook_t _sanitizer_mmap_hook = 0;
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE sanitizer_munmap_hook_t _sanitizer_munmap_hook = 0;
+
 namespace __sanitizer {
 
 #if SANITIZER_LINUX && defined(__x86_64__)
@@ -112,18 +119,24 @@ namespace __sanitizer {
 uptr internal_mmap(void *addr, uptr length, int prot, int flags, int fd,
                    OFF_T offset) {
 #if SANITIZER_FREEBSD || SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return internal_syscall(SYSCALL(mmap), (uptr)addr, length, prot, flags, fd,
+  uptr result_mem = internal_syscall(SYSCALL(mmap), (uptr)addr, length, prot, flags, fd,
                           offset);
 #else
   // mmap2 specifies file offset in 4096-byte units.
   CHECK(IsAligned(offset, 4096));
-  return internal_syscall(SYSCALL(mmap2), addr, length, prot, flags, fd,
+  uptr result_mem = internal_syscall(SYSCALL(mmap2), addr, length, prot, flags, fd,
                           offset / 4096);
 #endif
+  if (_sanitizer_mmap_hook)
+    _sanitizer_mmap_hook(addr, length, prot, flags, fd, offset, (void*)result_mem);
+  return result_mem;
 }
 
 uptr internal_munmap(void *addr, uptr length) {
-  return internal_syscall(SYSCALL(munmap), (uptr)addr, length);
+  uptr result = internal_syscall(SYSCALL(munmap), (uptr)addr, length);
+  if (_sanitizer_munmap_hook)
+    _sanitizer_munmap_hook(addr, length);
+  return result;
 }
 
 int internal_mprotect(void *addr, uptr length, int prot) {
