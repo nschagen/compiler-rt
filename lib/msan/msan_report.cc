@@ -59,17 +59,13 @@ static void DescribeStackOrigin(const char *so, uptr pc) {
 }
 
 void DescribeStackOriginToBuffer(const char *so, uptr pc, char **buf, unsigned int *size) {
-  Decorator d;
   char *s = internal_strdup(so);
   char *sep = internal_strchr(s, '@');
   CHECK(sep);
   *sep = '\0';
-  PrintfToBuffer(buf, size, "%s", d.Origin());
   PrintfToBuffer(buf, size,
-      "  %sUninitialized value was created by an allocation of '%s%s%s'"
-      " in the stack frame of function '%s%s%s'%s\n",
-      d.Origin(), d.Name(), s, d.Origin(), d.Name(), sep + 1, d.Origin(),
-      d.End());
+      " Uninitialized value was created by an allocation of '%s'"
+      " in the stack frame of function '%s'\n", s, sep + 1);
   InternalFree(s);
 
   if (pc) {
@@ -119,13 +115,11 @@ static void DescribeOrigin(u32 id) {
 }
 
 void DescribeOriginToBuffer(u32 id, char **b, unsigned int *s) {
-  Decorator d;
   Origin o = Origin::FromRawId(id);
   while (o.isChainedOrigin()) {
     StackTrace stack;
     o = o.getNextChainedOrigin(&stack);
-    PrintfToBuffer(b, s, "  %sUninitialized value was stored to memory at%s\n", d.Origin(),
-        d.End());
+    PrintfToBuffer(b, s, "Uninitialized value was stored to memory at\n");
     // PrintToBuffer
     stack.PrintToBuffer(b, s);
   }
@@ -138,19 +132,16 @@ void DescribeOriginToBuffer(u32 id, char **b, unsigned int *s) {
     StackTrace stack = o.getStackTraceForHeapOrigin();
     switch (stack.tag) {
       case StackTrace::TAG_ALLOC:
-        PrintfToBuffer(b, s, "  %sUninitialized value was created by a heap allocation%s\n",
-               d.Origin(), d.End());
+        PrintfToBuffer(b, s, "Uninitialized value was created by a heap allocation\n");
         break;
       case StackTrace::TAG_DEALLOC:
-        PrintfToBuffer(b, s, "  %sUninitialized value was created by a heap deallocation%s\n",
-               d.Origin(), d.End());
+        PrintfToBuffer(b, s, "Uninitialized value was created by a heap deallocation\n");
         break;
       case STACK_TRACE_TAG_POISON:
-        PrintfToBuffer(b, s, "  %sMemory was marked as uninitialized%s\n", d.Origin(),
-               d.End());
+        PrintfToBuffer(b, s, "Memory was marked as uninitialized\n");
         break;
       default:
-        PrintfToBuffer(b, s, "  %sUninitialized value was created%s\n", d.Origin(), d.End());
+        PrintfToBuffer(b, s, "Uninitialized value was created\n");
         break;
     }
     // PrintToBuffer
