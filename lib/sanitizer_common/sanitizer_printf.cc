@@ -228,19 +228,24 @@ static void CallPrintfAndReportCallback(const char *str) {
     PrintfAndReportCallback(str);
 }
 
-static void SharedPrintfCode(bool append_pid, const char *format,
-                             va_list args) {
+#define MMAP_PRINT_BUFFER_SIZE 16 * 1024
+#define LOCAL_PRINT_BUFFER_SIZE 400
+
+static char *SharedPrintfCode(bool append_pid, 
+                              char *local_buffer,
+                              int local_buffer_size,
+                              const char *format,
+                              va_list args) {
   va_list args2;
   va_copy(args2, args);
-  const int kLen = 16 * 1024;
+  const int kLen = MMAP_PRINT_BUFFER_SIZE;
   // |local_buffer| is small enough not to overflow the stack and/or violate
   // the stack limit enforced by TSan (-Wframe-larger-than=512). On the other
   // hand, the bigger the buffer is, the more the chance the error report will
   // fit into it.
-  char local_buffer[400];
   int needed_length;
   char *buffer = local_buffer;
-  int buffer_size = ARRAY_SIZE(local_buffer);
+  int buffer_size = local_buffer_size;
   // First try to print a message using a local buffer, and then fall back to
   // mmaped buffer.
   for (int use_mmap = 0; use_mmap < 2; use_mmap++) {
@@ -274,24 +279,51 @@ static void SharedPrintfCode(bool append_pid, const char *format,
     needed_length += VSNPrintf(buffer + needed_length,
                                buffer_size - needed_length, format, args);
     CHECK_NEEDED_LENGTH
-    // If the message fit into the buffer, print it and exit.
+    // If the message fit into the buffer, return it.
+    // The caller must unmap the memory if mmap was used!
     break;
 #   undef CHECK_NEEDED_LENGTH
   }
-  RawWrite(buffer);
-  AndroidLogWrite(buffer);
-  CallPrintfAndReportCallback(buffer);
-  // If we had mapped any memory, clean up.
-  if (buffer != local_buffer)
-    UnmapOrDie((void *)buffer, buffer_size);
   va_end(args2);
+  return buffer;
 }
 
 FORMAT(1, 2)
 void Printf(const char *format, ...) {
   va_list args;
+  char local_buffer[LOCAL_PRINT_BUFFER_SIZE];
   va_start(args, format);
-  SharedPrintfCode(false, format, args);
+  char *buffer = SharedPrintfCode(false, local_buffer,
+                                  LOCAL_PRINT_BUFFER_SIZE,
+                                  format, args);
+
+  // Print the generated buffer
+  RawWrite(buffer);
+  AndroidLogWrite(buffer);
+  CallPrintfAndReportCallback(buffer);
+
+  // SharedPrintfCode possibly mmap'ed the buffer
+  if (buffer != local_buffer)
+    UnmapOrDie((void *)buffer, MMAP_PRINT_BUFFER_SIZE);
+  va_end(args);
+}
+
+FORMAT(3, 4)
+void PrintfToBuffer(char **buf, unsigned int *size, const char *format, ...) {
+  if (!buf || !size)
+      return;
+  va_list args;
+  char local_buffer[LOCAL_PRINT_BUFFER_SIZE];
+  va_start(args, format);
+  char *buffer = SharedPrintfCode(false, local_buffer, LOCAL_PRINT_BUFFER_SIZE, format, args);
+
+  // Append generated buffer to the caller's write buffer
+  int written = AppendString(buf, *buf + *size, -1, buffer);
+  *size = (*size - written <= 0) ? 0 : *size - written;
+
+  // SharedPrintfCode possibly mmap'ed the buffer
+  if (buffer != local_buffer)
+    UnmapOrDie((void *)buffer, MMAP_PRINT_BUFFER_SIZE);
   va_end(args);
 }
 
@@ -299,8 +331,20 @@ void Printf(const char *format, ...) {
 FORMAT(1, 2)
 void Report(const char *format, ...) {
   va_list args;
+  char local_buffer[LOCAL_PRINT_BUFFER_SIZE];
   va_start(args, format);
-  SharedPrintfCode(true, format, args);
+  char *buffer = SharedPrintfCode(true, local_buffer,
+                                  LOCAL_PRINT_BUFFER_SIZE,
+                                  format, args);
+
+  // Print the generated buffer
+  RawWrite(buffer);
+  AndroidLogWrite(buffer);
+  CallPrintfAndReportCallback(buffer);
+
+  // SharedPrintfCode possibly mmap'ed the buffer
+  if (buffer != local_buffer)
+    UnmapOrDie((void *)buffer, MMAP_PRINT_BUFFER_SIZE);
   va_end(args);
 }
 

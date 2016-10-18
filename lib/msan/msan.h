@@ -205,6 +205,9 @@ void DescribeMemoryRange(const void *x, uptr size);
 void ReportUMRInsideAddressRange(const char *what, const void *start, uptr size,
                                  uptr offset);
 
+void DescribeStackOriginToBuffer(const char *so, uptr pc, char **b, unsigned int *s);
+void DescribeOriginToBuffer(u32 id, char **buf, unsigned int *size);
+
 // Unpoison first n function arguments.
 void UnpoisonParam(uptr n);
 void UnpoisonThreadLocalState();

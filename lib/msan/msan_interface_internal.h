@@ -95,6 +95,8 @@ SANITIZER_INTERFACE_ATTRIBUTE
 u32 __msan_chain_origin(u32 id);
 SANITIZER_INTERFACE_ATTRIBUTE
 u32 __msan_get_origin(const void *a);
+SANITIZER_INTERFACE_ATTRIBUTE
+int __msan_describe_origin(u32 origin, char *buf, unsigned int bufsize);
 
 // Test that this_id is a descendant of prev_id (or they are simply equal).
 // "descendant" here means that are part of the same chain, created with

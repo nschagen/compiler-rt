@@ -161,6 +161,7 @@ void SetLowLevelAllocateCallback(LowLevelAllocateCallback callback);
 void RawWrite(const char *buffer);
 bool ColorizeReports();
 void Printf(const char *format, ...);
+void PrintfToBuffer(char **buf, unsigned int *size, const char *format, ...);
 void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));
 #define VReport(level, ...)                                              \

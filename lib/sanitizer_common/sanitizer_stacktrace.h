@@ -56,6 +56,10 @@ struct StackTrace {
   // Prints a symbolized stacktrace, followed by an empty line.
   void Print() const;
 
+  // Prints a symbolized stacktrace to a buffer, followed by an empty line.
+  // The b pointer is advanced and s decremented as bytes are written
+  void PrintToBuffer(char **b, unsigned int *s) const;
+
   static bool WillUseFastUnwind(bool request_fast_unwind) {
     if (!SANITIZER_CAN_FAST_UNWIND)
       return false;

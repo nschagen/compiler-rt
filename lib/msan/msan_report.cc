@@ -58,6 +58,28 @@ static void DescribeStackOrigin(const char *so, uptr pc) {
   }
 }
 
+void DescribeStackOriginToBuffer(const char *so, uptr pc, char **buf, unsigned int *size) {
+  Decorator d;
+  char *s = internal_strdup(so);
+  char *sep = internal_strchr(s, '@');
+  CHECK(sep);
+  *sep = '\0';
+  PrintfToBuffer(buf, size, "%s", d.Origin());
+  PrintfToBuffer(buf, size,
+      "  %sUninitialized value was created by an allocation of '%s%s%s'"
+      " in the stack frame of function '%s%s%s'%s\n",
+      d.Origin(), d.Name(), s, d.Origin(), d.Name(), sep + 1, d.Origin(),
+      d.End());
+  InternalFree(s);
+
+  if (pc) {
+    // For some reason function address in LLVM IR is 1 less then the address
+    // of the first instruction.
+    pc = StackTrace::GetNextInstructionPc(pc);
+    StackTrace(&pc, 1).PrintToBuffer(buf, size);
+  }
+}
+
 static void DescribeOrigin(u32 id) {
   VPrintf(1, "  raw origin id: %d\n", id);
   Decorator d;
@@ -93,6 +115,46 @@ static void DescribeOrigin(u32 id) {
         break;
     }
     stack.Print();
+  }
+}
+
+void DescribeOriginToBuffer(u32 id, char **b, unsigned int *s) {
+  Decorator d;
+  Origin o = Origin::FromRawId(id);
+  while (o.isChainedOrigin()) {
+    StackTrace stack;
+    o = o.getNextChainedOrigin(&stack);
+    PrintfToBuffer(b, s, "  %sUninitialized value was stored to memory at%s\n", d.Origin(),
+        d.End());
+    // PrintToBuffer
+    stack.PrintToBuffer(b, s);
+  }
+  if (o.isStackOrigin()) {
+    uptr pc;
+    const char *so = GetStackOriginDescr(o.getStackId(), &pc);
+    // ToBuffer
+    DescribeStackOriginToBuffer(so, pc, b, s);
+  } else {
+    StackTrace stack = o.getStackTraceForHeapOrigin();
+    switch (stack.tag) {
+      case StackTrace::TAG_ALLOC:
+        PrintfToBuffer(b, s, "  %sUninitialized value was created by a heap allocation%s\n",
+               d.Origin(), d.End());
+        break;
+      case StackTrace::TAG_DEALLOC:
+        PrintfToBuffer(b, s, "  %sUninitialized value was created by a heap deallocation%s\n",
+               d.Origin(), d.End());
+        break;
+      case STACK_TRACE_TAG_POISON:
+        PrintfToBuffer(b, s, "  %sMemory was marked as uninitialized%s\n", d.Origin(),
+               d.End());
+        break;
+      default:
+        PrintfToBuffer(b, s, "  %sUninitialized value was created%s\n", d.Origin(), d.End());
+        break;
+    }
+    // PrintToBuffer
+    stack.PrintToBuffer(b, s);
   }
 }
 

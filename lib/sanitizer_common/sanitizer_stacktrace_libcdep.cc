@@ -45,6 +45,33 @@ void StackTrace::Print() const {
   Printf("\n");
 }
 
+
+void StackTrace::PrintToBuffer(char **b, unsigned int *s) const {
+  if (trace == nullptr || size == 0) {
+    PrintfToBuffer(b,s,"    <empty stack>\n\n");
+    return;
+  }
+  InternalScopedString frame_desc(GetPageSizeCached() * 2);
+  uptr frame_num = 0;
+  for (uptr i = 0; i < size && trace[i]; i++) {
+    // PCs in stack traces are actually the return addresses, that is,
+    // addresses of the next instructions after the call.
+    uptr pc = GetPreviousInstructionPc(trace[i]);
+    SymbolizedStack *frames = Symbolizer::GetOrInit()->SymbolizePC(pc);
+    CHECK(frames);
+    for (SymbolizedStack *cur = frames; cur; cur = cur->next) {
+      frame_desc.clear();
+      RenderFrame(&frame_desc, common_flags()->stack_trace_format, frame_num++,
+                  cur->info, common_flags()->symbolize_vs_style,
+                  common_flags()->strip_path_prefix);
+      PrintfToBuffer(b,s,"%s\n", frame_desc.data());
+    }
+    frames->ClearAll();
+  }
+  // Always print a trailing empty line after stack trace.
+  PrintfToBuffer(b,s,"\n");
+}
+
 void BufferedStackTrace::Unwind(u32 max_depth, uptr pc, uptr bp, void *context,
                                 uptr stack_top, uptr stack_bottom,
                                 bool request_fast_unwind) {
