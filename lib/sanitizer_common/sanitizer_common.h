@@ -28,6 +28,25 @@ extern "C" void _ReadWriteBarrier();
 #pragma intrinsic(_ReadWriteBarrier)
 #endif
 
+/*
+ * Used to ensure delta is kept up to date about memory areas it should not
+ * compare while merging
+ */
+typedef void (*__delta_whitelist_add_t)(void *addr, unsigned long length);
+typedef void (*__delta_whitelist_rm_t)(void *addr);
+
+extern "C" __delta_whitelist_add_t __delta_whitelist_add;
+extern "C" __delta_whitelist_rm_t __delta_whitelist_rm;
+
+#define __DELTA_WHITELIST_ADD(x, s) \
+    do { \
+        if (__delta_whitelist_add) __delta_whitelist_add((x), (s)); \
+    } while (0)
+#define __DELTA_WHITELIST_RM(x) \
+    do { \
+        if (__delta_whitelist_rm) __delta_whitelist_rm((x)); \
+    } while (0)
+
 namespace __sanitizer {
 struct StackTrace;
 struct AddressInfo;
