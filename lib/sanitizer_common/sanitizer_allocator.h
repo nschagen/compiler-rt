@@ -324,6 +324,7 @@ class SizeClassAllocator64 {
   void Init() {
     CHECK_EQ(kSpaceBeg,
              reinterpret_cast<uptr>(MmapNoAccess(kSpaceBeg, kSpaceSize)));
+    __DELTA_WHITELIST_ADD((void*)kSpaceBeg, kSpaceSize);
     MapWithCallback(kSpaceEnd, AdditionalSize());
   }
 
@@ -851,6 +852,7 @@ class SizeClassAllocator32 {
     uptr res = reinterpret_cast<uptr>(MmapAlignedOrDie(kRegionSize, kRegionSize,
                                       "SizeClassAllocator32"));
     MapUnmapCallback().OnMap(res, kRegionSize);
+    __DELTA_WHITELIST_ADD((void*)res, kRegionSize);
     stat->Add(AllocatorStatMapped, kRegionSize);
     CHECK_EQ(0U, (res & (kRegionSize - 1)));
     possible_regions.set(ComputeRegionId(res), static_cast<u8>(class_id));

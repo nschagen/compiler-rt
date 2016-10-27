@@ -140,6 +140,7 @@ void SetShadow(const void *ptr, uptr size, u8 value) {
         REAL(memset)((void *)page_end, 0, shadow_end - page_end);
       }
       MmapFixedNoReserve(page_beg, page_end - page_beg);
+      __DELTA_WHITELIST_ADD((void*)page_beg, page_end - page_beg);
     }
   }
 }

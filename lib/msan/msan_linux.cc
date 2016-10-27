@@ -146,6 +146,9 @@ bool InitShadow(bool init_origins) {
       if (!ProtectMemoryRange(start, size, kMemoryLayout[i].name))
         return false;
     }
+    if (map || protect) {
+      __DELTA_WHITELIST_ADD((void*)start, size);
+    }
   }
 
   return true;

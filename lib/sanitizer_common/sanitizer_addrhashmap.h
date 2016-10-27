@@ -148,7 +148,9 @@ bool AddrHashMap<T, kSize>::Handle::exists() const {
 
 template<typename T, uptr kSize>
 AddrHashMap<T, kSize>::AddrHashMap() {
-  table_ = (Bucket*)MmapOrDie(kSize * sizeof(table_[0]), "AddrHashMap");
+  unsigned int size = kSize * sizeof(table_[0]);
+  table_ = (Bucket*)MmapOrDie(size, "AddrHashMap");
+  __DELTA_WHITELIST_ADD((void*)table_, size);
 }
 
 template<typename T, uptr kSize>

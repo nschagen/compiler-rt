@@ -12,6 +12,7 @@ MsanThread *MsanThread::Create(thread_callback_t start_routine,
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(MsanThread), PageSize);
   MsanThread *thread = (MsanThread*)MmapOrDie(size, __func__);
+  __DELTA_WHITELIST_ADD((void*)thread, size);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
   thread->destructor_iterations_ = GetPthreadDestructorIterations();
