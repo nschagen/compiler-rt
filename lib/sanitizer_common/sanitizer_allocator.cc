@@ -17,6 +17,11 @@
 
 namespace __sanitizer {
 
+// We want to use regular malloc or when specified, the delta malloc functions,
+// for MSan allocations. This ensures that sanitizer memory is kept separate
+// from application memory.
+#define SANITIZER_USE_MALLOC
+
 // ThreadSanitizer for Go uses libc malloc/free.
 #if defined(SANITIZER_GO) || defined(SANITIZER_USE_MALLOC)
 # if SANITIZER_LINUX && !SANITIZER_ANDROID
@@ -32,12 +37,22 @@ extern "C" void __libc_free(void *ptr);
 
 static void *RawInternalAlloc(uptr size, InternalAllocatorCache *cache) {
   (void)cache;
-  return LIBC_MALLOC(size);
+  // If delta provides an internal heap for us, use it
+  if (__delta_whitelist_malloc) {
+      return __delta_whitelist_malloc(size);
+  } else {
+      return LIBC_MALLOC(size);
+  }
 }
 
 static void RawInternalFree(void *ptr, InternalAllocatorCache *cache) {
   (void)cache;
-  LIBC_FREE(ptr);
+  // If delta provides an internal heap for us, use it
+  if (__delta_whitelist_free) {
+      __delta_whitelist_free(ptr);
+  } else {
+      LIBC_FREE(ptr);
+  }
 }
 
 InternalAllocator *internal_allocator() {

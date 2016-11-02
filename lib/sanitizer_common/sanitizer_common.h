@@ -34,9 +34,13 @@ extern "C" void _ReadWriteBarrier();
  */
 typedef void (*__delta_whitelist_add_t)(void *addr, unsigned long length);
 typedef void (*__delta_whitelist_rm_t)(void *addr);
+typedef void *(*__delta_whitelist_malloc_t)(unsigned int size);
+typedef void (*__delta_whitelist_free_t)(void *addr);
 
 extern "C" __delta_whitelist_add_t __delta_whitelist_add;
 extern "C" __delta_whitelist_rm_t __delta_whitelist_rm;
+extern "C" __delta_whitelist_malloc_t __delta_whitelist_malloc;
+extern "C" __delta_whitelist_free_t __delta_whitelist_free;
 
 #define __DELTA_WHITELIST_ADD(x, s) \
     do { \

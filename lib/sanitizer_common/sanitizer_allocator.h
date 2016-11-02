@@ -324,7 +324,7 @@ class SizeClassAllocator64 {
   void Init() {
     CHECK_EQ(kSpaceBeg,
              reinterpret_cast<uptr>(MmapNoAccess(kSpaceBeg, kSpaceSize)));
-    __DELTA_WHITELIST_ADD((void*)kSpaceBeg, kSpaceSize);
+    //__DELTA_WHITELIST_ADD((void*)kSpaceBeg, kSpaceSize);
     MapWithCallback(kSpaceEnd, AdditionalSize());
   }
 

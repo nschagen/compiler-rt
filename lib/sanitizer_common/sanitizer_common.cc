@@ -24,6 +24,11 @@
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE __delta_whitelist_add_t __delta_whitelist_add = 0;
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE __delta_whitelist_rm_t __delta_whitelist_rm = 0;
 
+// Allows sanitizer to allocate memory on a "safe" heap provided by libdelta.
+// The memory of this heap is ignored during merges.
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE __delta_whitelist_malloc_t __delta_whitelist_malloc = 0;
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE __delta_whitelist_free_t __delta_whitelist_free = 0;
+
 namespace __sanitizer {
 
 const char *SanitizerToolName = "SanitizerTool";
