@@ -56,6 +56,7 @@ inline void *PersistentAllocator::alloc(uptr size) {
     uptr allocsz = 64 * 1024;
     if (allocsz < size) allocsz = size;
     uptr mem = (uptr)MmapOrDie(allocsz, "stack depot");
+    __DELTA_WHITELIST_ADD((void*)mem, allocsz);
     atomic_store(&region_end, mem + allocsz, memory_order_release);
     atomic_store(&region_pos, mem, memory_order_release);
   }

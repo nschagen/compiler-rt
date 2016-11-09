@@ -94,10 +94,10 @@ void (*death_callback)(void);
 
 // Array of stack origins.
 // FIXME: make it resizable.
-static const uptr kNumStackOriginDescrs = 1024 * 1024;
-__attribute__((section("sanitizer_data"))) __attribute__((aligned(0x1000))) static const char *StackOriginDescr[kNumStackOriginDescrs];
-__attribute__((section("sanitizer_data"))) __attribute__((aligned(0x1000))) static uptr StackOriginPC[kNumStackOriginDescrs];
-static atomic_uint32_t NumStackOriginDescrs;
+__attribute__((section("sanitizer_data"))) static const uptr kNumStackOriginDescrs = 1024 * 1024;
+__attribute__((section("sanitizer_data"))) static const char *StackOriginDescr[kNumStackOriginDescrs];
+__attribute__((section("sanitizer_data"))) static uptr StackOriginPC[kNumStackOriginDescrs];
+__attribute__((section("sanitizer_data"))) static atomic_uint32_t NumStackOriginDescrs;
 
 void Flags::SetDefaults() {
 #define MSAN_FLAG(Type, Name, DefaultValue, Description) Name = DefaultValue;
