@@ -119,7 +119,7 @@ void DescribeOriginToBuffer(u32 id, char **b, unsigned int *s) {
   while (o.isChainedOrigin()) {
     StackTrace stack;
     o = o.getNextChainedOrigin(&stack);
-    PrintfToBuffer(b, s, "Uninitialized value was stored to memory at\n");
+    PrintfToBuffer(b, s, "Value was stored to memory at\n");
     // PrintToBuffer
     stack.PrintToBuffer(b, s);
   }
@@ -132,16 +132,16 @@ void DescribeOriginToBuffer(u32 id, char **b, unsigned int *s) {
     StackTrace stack = o.getStackTraceForHeapOrigin();
     switch (stack.tag) {
       case StackTrace::TAG_ALLOC:
-        PrintfToBuffer(b, s, "Uninitialized value was created by a heap allocation\n");
+        PrintfToBuffer(b, s, "Value was created by a heap allocation\n");
         break;
       case StackTrace::TAG_DEALLOC:
-        PrintfToBuffer(b, s, "Uninitialized value was created by a heap deallocation\n");
+        PrintfToBuffer(b, s, "Value was created by a heap deallocation\n");
         break;
       case STACK_TRACE_TAG_POISON:
         PrintfToBuffer(b, s, "Memory was marked as uninitialized\n");
         break;
       default:
-        PrintfToBuffer(b, s, "Uninitialized value was created\n");
+        PrintfToBuffer(b, s, "Value was created\n");
         break;
     }
     // PrintToBuffer
