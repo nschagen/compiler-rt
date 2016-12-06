@@ -19,10 +19,9 @@
 #include "sanitizer_stacktrace_printer.h"
 #include "sanitizer_symbolizer.h"
 
-// Allows sanitizers to whitelist memory regions so that they are not taken into
-// account by libdelta when doing merges
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE __delta_whitelist_add_t __delta_whitelist_add = 0;
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE __delta_whitelist_rm_t __delta_whitelist_rm = 0;
+// When these weak symbols are overridden / non-zero, it means that deltastub defines these functions
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE long deltastub_whitelist_add = 0;
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE long deltastub_whitelist_rm = 0;
 
 // Allows sanitizer to allocate memory on a "safe" heap provided by libdelta.
 // The memory of this heap is ignored during merges.

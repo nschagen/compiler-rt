@@ -32,23 +32,23 @@ extern "C" void _ReadWriteBarrier();
  * Used to ensure delta is kept up to date about memory areas it should not
  * compare while merging
  */
-typedef void (*__delta_whitelist_add_t)(void *addr, unsigned long length);
-typedef void (*__delta_whitelist_rm_t)(void *addr);
+typedef void (*deltastub_whitelist_add_t)(void *addr, unsigned long length);
+typedef void (*deltastub_whitelist_rm_t)(void *addr);
 typedef void *(*__delta_whitelist_malloc_t)(unsigned int size);
 typedef void (*__delta_whitelist_free_t)(void *addr);
 
-extern "C" __delta_whitelist_add_t __delta_whitelist_add;
-extern "C" __delta_whitelist_rm_t __delta_whitelist_rm;
+extern "C" long deltastub_whitelist_add;
+extern "C" long deltastub_whitelist_rm;
 extern "C" __delta_whitelist_malloc_t __delta_whitelist_malloc;
 extern "C" __delta_whitelist_free_t __delta_whitelist_free;
 
 #define __DELTA_WHITELIST_ADD(x, s) \
     do { \
-        if (__delta_whitelist_add) __delta_whitelist_add((x), (s)); \
+        if (deltastub_whitelist_add) ((deltastub_whitelist_add_t)&deltastub_whitelist_add)((x), (s)); \
     } while (0)
 #define __DELTA_WHITELIST_RM(x) \
     do { \
-        if (__delta_whitelist_rm) __delta_whitelist_rm((x)); \
+        if (deltastub_whitelist_rm) ((deltastub_whitelist_rm_t)&deltastub_whitelist_rm)((x)); \
     } while (0)
 
 namespace __sanitizer {
